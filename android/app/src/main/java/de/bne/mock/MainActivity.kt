@@ -178,7 +178,7 @@ class MainActivity : Activity() {
     }
 
     private fun start() {
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (packageManager.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, packageName) != PackageManager.PERMISSION_GRANTED) {
             MockService.state = MockService.State.ERROR
             MockService.detail = "Location permission missing. Please allow it."
             askPermissions()
@@ -218,11 +218,13 @@ class MainActivity : Activity() {
     private fun copyCoords() {
         if (MockService.state != MockService.State.LIVE && MockService.state != MockService.State.STALE) return
         val txt = String.format(Locale.US, "%.6f, %.6f", MockService.lat, MockService.lon)
-        getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("coordinates", txt))
+        (getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager)
+            .setPrimaryClip(ClipData.newPlainText("coordinates", txt))
         Toast.makeText(this, "Copied $txt", Toast.LENGTH_SHORT).show()
     }
 
     private fun askPermissions() {
+        if (Build.VERSION.SDK_INT < 23) return // pre-M: permissions are granted at install time
         val need = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         if (Build.VERSION.SDK_INT >= 33) need.add(Manifest.permission.POST_NOTIFICATIONS)
         val missing = need.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }

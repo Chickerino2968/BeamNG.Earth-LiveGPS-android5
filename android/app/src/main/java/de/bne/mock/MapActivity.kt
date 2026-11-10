@@ -44,13 +44,12 @@ class MapActivity : Activity() {
             webViewClient = object : WebViewClient() {
                 // map links (OpenStreetMap credits etc.) open in the normal browser
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                    val url = request.url
-                    return if (url.path?.startsWith("/map") == true && url.host == Uri.parse(startUrl).host) {
-                        false
-                    } else {
-                        try { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, url)) } catch (_: Exception) {}
-                        true
-                    }
+                    return !handleUrlLoading(request.url.toString())
+                }
+                // deprecated signature: used on Android < 7, where WebResourceRequest doesn't exist
+                @Suppress("DEPRECATION")
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    return !url.isNullOrEmpty() && !handleUrlLoading(url)
                 }
             }
         }
@@ -61,6 +60,17 @@ class MapActivity : Activity() {
 
     private val startUrl: String
         get() = intent.getStringExtra(EXTRA_URL) ?: "about:blank"
+
+    /** True = keep loading in this WebView; false = open externally. */
+    private fun handleUrlLoading(url: String): Boolean {
+        val uri = Uri.parse(url)
+        return if (uri.path.orEmpty().startsWith("/map") && uri.host == Uri.parse(startUrl).host) {
+            true
+        } else {
+            try { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri)) } catch (_: Exception) {}
+            false
+        }
+    }
 
     private fun goFullscreen() {
         if (Build.VERSION.SDK_INT >= 30) {

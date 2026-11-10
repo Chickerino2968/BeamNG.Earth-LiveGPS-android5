@@ -109,7 +109,7 @@ class MockService : Service() {
     }
 
     private fun startAsForeground(text: String) {
-        val nm = getSystemService(NotificationManager::class.java)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26) {
             nm.createNotificationChannel(NotificationChannel(CHANNEL, "Mock GPS", NotificationManager.IMPORTANCE_LOW))
         }
@@ -134,7 +134,7 @@ class MockService : Service() {
     }
 
     private fun updateNotification(text: String) {
-        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification(text))
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, notification(text))
     }
 
     /** Registers GPS + network (+ fused on Android 12+) as test providers. false = no mock permission. */
